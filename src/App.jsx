@@ -1,50 +1,51 @@
-import { useEffect, useState } from "react";
-import "./App.css";
+import React, { useEffect, useState } from 'react';
 
 function App() {
   const [topics, setTopics] = useState([]);
-  const [selectedTopic, setSelectedTopic] = useState("");
+  const [selectedTopic, setSelectedTopic] = useState('');
   const [quiz, setQuiz] = useState([]);
-  const [loading, setLoading] = useState(false);
-  
-  // Replace this with your actual Render backend URL
-  const BACKEND_URL = 'https://teks-algebra-1-backend.onrender.com';
 
-  // Fetch topics when component mounts
+  // ✅ Fetch topics from backend
   useEffect(() => {
-    fetch(`${BACKEND_URL}/api/topics`)
-      .then((res) => res.json())
-      .then((data) => setTopics(data.topics))
-      .catch((err) => console.error("Error fetching topics:", err));
+    fetch('https://teks-algebra-1-backend.onrender.com/api/topics')
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error('Failed to fetch topics');
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setTopics(data.topics);
+      })
+      .catch((err) => {
+        console.error('Error fetching topics:', err);
+      });
   }, []);
 
-  // Fetch quiz based on selected topic
-  const fetchQuiz = () => {
+  // ✅ Fetch quiz for selected topic
+  const getQuiz = () => {
     if (!selectedTopic) return;
-
-    setLoading(true);
-    fetch(`${BACKEND_URL}/api/generate-weekly-quiz?topic=${selectedTopic}`)
+    fetch(`https://teks-algebra-1-backend.onrender.com/api/generate-quiz?topic_id=${selectedTopic}`)
       .then((res) => res.json())
       .then((data) => {
         setQuiz(data.quiz);
-        setLoading(false);
       })
       .catch((err) => {
-        console.error("Error fetching quiz:", err);
-        setLoading(false);
+        console.error('Error fetching quiz:', err);
       });
   };
 
   return (
-    <div className="App" style={{ fontFamily: "sans-serif", maxWidth: "600px", margin: "2rem auto" }}>
-      <h1>TEKS Algebra 1 Weekly Quiz</h1>
+    <div style={{ padding: '2rem', fontFamily: 'Arial' }}>
+      <h1>TEKS Algebra 1 Quiz Generator</h1>
 
+      {/* ✅ Dropdown for topic selection */}
       <label htmlFor="topic-select">Select a Topic:</label>
       <select
         id="topic-select"
         value={selectedTopic}
         onChange={(e) => setSelectedTopic(e.target.value)}
-        style={{ marginLeft: "10px", padding: "5px" }}
+        style={{ marginLeft: '1rem' }}
       >
         <option value="">-- Choose a topic --</option>
         {topics.map((topic) => (
@@ -54,24 +55,20 @@ function App() {
         ))}
       </select>
 
-      <div style={{ marginTop: "20px" }}>
-        <button onClick={fetchQuiz} disabled={!selectedTopic} style={{ padding: "10px 20px" }}>
-          Get Weekly Quiz
-        </button>
-      </div>
+      <br /><br />
+      <button onClick={getQuiz}>Get Weekly Quiz</button>
 
-      {loading && <p>Loading quiz...</p>}
-
+      {/* ✅ Display quiz */}
       {quiz.length > 0 && (
-        <div style={{ marginTop: "30px" }}>
-          <h2>Quiz Questions</h2>
-          <ol>
-            {quiz.map((q, index) => (
-              <li key={index} style={{ marginBottom: "10px" }}>
-                {q.question}
+        <div style={{ marginTop: '2rem' }}>
+          <h2>Quiz</h2>
+          <ul>
+            {quiz.map((q, idx) => (
+              <li key={idx}>
+                <strong>Q{idx + 1}:</strong> {q.question}
               </li>
             ))}
-          </ol>
+          </ul>
         </div>
       )}
     </div>
