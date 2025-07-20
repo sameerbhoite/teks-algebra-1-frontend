@@ -25,7 +25,7 @@ function App() {
   // ✅ Fetch quiz for selected topic
   const getQuiz = () => {
     if (!selectedTopic) return;
-    fetch(`https://teks-algebra-1-backend.onrender.com/api/generate-quiz?topic_id=${selectedTopic}`)
+    fetch(`https://teks-algebra-1-backend.onrender.com/api/generate-quiz?topicId=${selectedTopic}`)
       .then((res) => res.json())
       .then((data) => {
         setQuiz(data.quiz);
