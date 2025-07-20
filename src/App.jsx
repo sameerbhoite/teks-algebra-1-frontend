@@ -1,95 +1,78 @@
-import React, { useState } from 'react';
-import {
-  Container,
-  Button,
-  Typography,
-  Card,
-  CardContent,
-  TextField,
-} from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import './App.css';
 
-export default function App() {
+function App() {
+  const [topics, setTopics] = useState([]);
+  const [selectedTopic, setSelectedTopic] = useState('');
   const [quiz, setQuiz] = useState([]);
-  const [answers, setAnswers] = useState({});
-  const [results, setResults] = useState({});
   const [loading, setLoading] = useState(false);
 
-  async function fetchQuiz() {
+  // Replace this with your actual Render backend URL
+  const BACKEND_URL = 'https://teks-algebra-1-backend.onrender.com';
+
+  // Fetch topics when the app loads
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/api/topics`)
+      .then((res) => res.json())
+      .then((data) => {
+        setTopics(data.topics);
+      })
+      .catch((err) => console.error('Error fetching topics:', err));
+  }, []);
+
+  // Fetch quiz when button is clicked
+  const handleGetQuiz = () => {
+    if (!selectedTopic) return;
     setLoading(true);
-    try {
-      const res = await fetch(
-        'https://teks-algebra-1-backend.onrender.com/api/generate-weekly-quiz'
-      );
-      const data = await res.json();
-      setQuiz(data.quiz);
-      setAnswers({});
-      setResults({});
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }
 
-  function handleChange(i, value) {
-    setAnswers((a) => ({ ...a, [i]: value }));
-  }
-
-  function checkAnswers() {
-    const r = {};
-    quiz.forEach((q, i) => {
-      const ua = parseFloat(answers[i]);
-      r[i] = !isNaN(ua) && Math.abs(ua - q.answer) < 0.01;
-    });
-    setResults(r);
-  }
+    fetch(`${BACKEND_URL}/api/generate-weekly-quiz?topic_id=${selectedTopic}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setQuiz(data.quiz);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Error fetching quiz:', err);
+        setLoading(false);
+      });
+  };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
-      <Typography variant="h3" mb={2}>
-        TEKS Algebra 1 Quiz
-      </Typography>
-      <Button variant="contained" onClick={fetchQuiz} disabled={loading}>
+    <div className="App">
+      <h1>TEKS Algebra 1 Quiz Generator</h1>
+
+      <label htmlFor="topic">Choose a topic:</label>
+      <select
+        id="topic"
+        value={selectedTopic}
+        onChange={(e) => setSelectedTopic(e.target.value)}
+      >
+        <option value="">-- Select a topic --</option>
+        {topics.map((topic) => (
+          <option key={topic.id} value={topic.id}>
+            {topic.name}
+          </option>
+        ))}
+      </select>
+
+      <button onClick={handleGetQuiz} disabled={!selectedTopic || loading}>
         {loading ? 'Loading...' : 'Get Weekly Quiz'}
-      </Button>
+      </button>
 
       {quiz.length > 0 && (
-        <Button
-          variant="outlined"
-          onClick={checkAnswers}
-          sx={{ ml: 2 }}
-          disabled={loading}
-        >
-          Check Answers
-        </Button>
+        <div>
+          <h2>Quiz</h2>
+          <ol>
+            {quiz.map((q, index) => (
+              <li key={index}>
+                <strong>{q.question}</strong> (Difficulty: {q.difficulty})
+              </li>
+            ))}
+          </ol>
+        </div>
       )}
-
-      {quiz.map((q, i) => (
-        <Card key={i} sx={{ mt: 2 }}>
-          <CardContent>
-            <Typography>
-              {i + 1}. {q.question} ={' '}
-              <TextField
-                size="small"
-                value={answers[i] || ''}
-                onChange={(e) => handleChange(i, e.target.value)}
-                sx={{ width: 100 }}
-              />
-            </Typography>
-            {results[i] != null && (
-              <Typography
-                color={results[i] ? 'green' : 'red'}
-                sx={{ display: 'inline', ml: 2 }}
-              >
-                {results[i] ? '✅' : `❌ (correct: ${q.answer})`}
-              </Typography>
-            )}
-            <Typography variant="caption" display="block">
-              Difficulty: {q.difficulty}
-            </Typography>
-          </CardContent>
-        </Card>
-      ))}
-    </Container>
+    </div>
   );
 }
+
+export default App;
