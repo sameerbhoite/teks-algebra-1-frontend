@@ -50,7 +50,7 @@ function App() {
         <option value="">-- Choose a topic --</option>
         {topics.map((topic) => (
           <option key={topic.id} value={topic.id}>
-            {topic.name}
+            {topic.title}
           </option>
         ))}
       </select>
